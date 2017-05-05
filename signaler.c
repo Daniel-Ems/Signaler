@@ -11,7 +11,7 @@
 unsigned int MAX_NUMBER = 4294967295;
 unsigned int start;
 unsigned int check;
-bool print;
+bool print = true;
 bool prime;
 int increment = 1;
 unsigned int x = 2;
@@ -24,7 +24,6 @@ void normal_increment(void)
 {
 	for(start = x; start <= MAX_NUMBER; start+=increment)
 		{
-
 			//assumed to be true until proven otherwise
 			prime = true;
 			//checks to see if the start is prime
@@ -37,7 +36,6 @@ void normal_increment(void)
 			{
             
 				//if the start % the check is 0 the start is not prime
-
 				if(start%check==0)
 				{
 					prime = false;
@@ -64,21 +62,28 @@ void normal_increment(void)
 
 void signal_handler(int signal_name)
 {
-	//works, optimize later
-	if(signal_name == SIGHUP)
-	{
-		start = check = 2;
-	}
-	if(signal_name == SIGUSR1)
-	{
-		print = false;
-	}
-	if(signal_name == SIGUSR2)
-	{
-		//TODO reverse direction of counting
-		increment *=  -1;
-	}
-	
+    switch(signal_name)
+    {
+        case SIGHUP:
+            start = 1;
+            check = 2;
+            increment = 1; //maybe remove depending on what chris says
+            break;
+        case SIGUSR1:
+            print = false;
+            break;
+        case SIGUSR2:
+            increment *= -1;
+            if(increment > 0)
+            {
+                start += 1;
+            }
+            else
+            {
+                start -= 1;
+            } 
+            break;
+    }
 }
 
 int main(int argc, char *argv[])
@@ -98,7 +103,7 @@ int main(int argc, char *argv[])
                 increment = -1;
                 break;
             case 's':
-                x = (strtol(optarg, NULL, 10) + 1);
+                x = (strtol(optarg, NULL, 10));
                 s_flag = true;
                 break;
             default:
@@ -111,6 +116,19 @@ int main(int argc, char *argv[])
         fprintf(stdout, "invalid use of -r\n");
         exit(1);
     }
+
+    if(s_flag)
+    {
+        if(increment == -1)
+        {
+            x -= 1;
+        }
+        else
+        {
+            x += 1;
+        }
+    }
+    
 	//This is the struct used to handle signals
 	struct sigaction sa;
 
