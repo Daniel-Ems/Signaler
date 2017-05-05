@@ -2,7 +2,7 @@ CPPFLAGS+=-Wall -Wextra -Wpedantic -Wextra -Wpedantic -Wwrite-strings
 CPPFLAGS+=-Wstack-usage=1024 -Wfloat-equal -Waggregate-return -Winline
 
 CFLAGS+=-std=c11
-LDLIBS+=-pthread
+LDLIBS+=-lpthread
 
 all=signaler
 bins: $(all)
@@ -24,5 +24,6 @@ profile: LDFLAGS+=-pg
 profile: $(bins)
 
 
-clean:
+clean: 
+		$(RM) $(all) *.o
 	
