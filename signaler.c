@@ -1,3 +1,5 @@
+#define _XOPEN_SOURCE
+#define _BSD_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -5,30 +7,39 @@
 #include <signal.h>
 #include <errno.h>
 #include <string.h>
+#include <limits.h>
 
-//used as the largest start held in an int.
-//global variables so they maybe reset if need be 
-unsigned int MAX_NUMBER = 4294967295;
+enum magic_numbers
+{
+    POS_INCREMENT = 1,
+    NEG_INCREMENT = -1,
+    TRUE_START = 2,
+    SLEEP_TIME = 500000
+};
+     
+    
+unsigned int max_number = UINT_MAX;
 unsigned int start;
 unsigned int check;
 bool print = true;
 bool prime;
-int increment = 1;
-unsigned int x = 2;
+int increment = POS_INCREMENT;
+unsigned int var_start = TRUE_START;
 
-//This function handles the signals
-//TODO change lay out of this function (try switch)
-
+void flip_increment(void)
+{
+    increment *= NEG_INCREMENT;
+}
 
 void normal_increment(void)
 {
-	for(start = x; start <= MAX_NUMBER; start+=increment)
+	for(start = var_start; start <= max_number; start+=increment)
 		{
 			//assumed to be true until proven otherwise
 			prime = true;
-			//checks to see if the start is prime
 
-            if(start < 2)
+			//checks to see if the start is prime
+            if(start < TRUE_START)
             {
                 break;
             }
@@ -55,7 +66,7 @@ void normal_increment(void)
 					print = true;
 				}
 			}
-			sleep(1);
+			usleep(SLEEP_TIME);
 		}
 }
 
@@ -66,21 +77,21 @@ void signal_handler(int signal_name)
     {
         case SIGHUP:
             start = 1;
-            check = 2;
-            increment = 1; //maybe remove depending on what chris says
+            check = TRUE_START;
+            increment = POS_INCREMENT; //maybe remove depending on what chris says
             break;
         case SIGUSR1:
             print = false;
             break;
         case SIGUSR2:
-            increment *= -1;
+            flip_increment();
             if(increment > 0)
             {
-                start += 1;
+                start += POS_INCREMENT;
             }
             else
             {
-                start -= 1;
+                start += NEG_INCREMENT;
             } 
             break;
     }
@@ -92,40 +103,55 @@ int main(int argc, char *argv[])
 
     int signaler_arguments;
     bool s_flag = false;
+    char *end_pointer = NULL;
     while(-1 < (signaler_arguments = getopt(argc, argv, "re:s:")))
     {
         switch(signaler_arguments)
         {
             case 'e':
-                MAX_NUMBER = strtol(optarg,NULL,10);
+                max_number = strtol(optarg,&end_pointer,10);
+                if(*end_pointer)
+                {
+                    fprintf(stdout, "-e option invalid, max_number = UINT_MAX\n");
+                    max_number = UINT_MAX;
+                }
                 break;
+
             case 'r':
-                increment = -1;
+                increment = NEG_INCREMENT;
                 break;
+
             case 's':
-                x = (strtol(optarg, NULL, 10));
+                var_start = (strtol(optarg, &end_pointer, 10));
                 s_flag = true;
+                if(*end_pointer)
+                {
+                    fprintf(stdout, "-s option invalid, start = 2\n");
+                    var_start = TRUE_START;
+                    s_flag = false;
+                }
                 break;
             default:
                 printf(" [-r reverse (used with -s)] [-s starting number] [-e ending number]\n");
+                exit(1);
         }
     }
 
-    if(increment == -1 && !s_flag)
+    if(increment == NEG_INCREMENT && !s_flag)
     {
-        fprintf(stdout, "invalid use of -r\n");
-        exit(1);
+        fprintf(stdout, "-s invalid or missing -r ignored\n");
+        increment = POS_INCREMENT;
     }
 
     if(s_flag)
     {
-        if(increment == -1)
+        if(increment == NEG_INCREMENT)
         {
-            x -= 1;
+            var_start += NEG_INCREMENT;
         }
         else
         {
-            x += 1;
+            var_start += POS_INCREMENT;
         }
     }
     
