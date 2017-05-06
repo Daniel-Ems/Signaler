@@ -45,7 +45,7 @@ void flip_increment(void)
     increment *= NEG_INCREMENT;
 }
 
-void prim_check(void)
+void prime_check(void)
 {
     //If true, the number is printed
     bool prime;
@@ -209,7 +209,7 @@ int main(int argc, char *argv[])
                 break;
             //Just prints a help screen
             default:
-                printf(" [-r reverse (used with -s)] [-s starting number] [-e",
+                printf("[-r reverse (used with -s)] [-s starting number] [-e"
                          "ending number]\n");
                 exit(1);
         }
